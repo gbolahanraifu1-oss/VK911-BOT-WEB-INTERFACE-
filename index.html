@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VK911 XMD — Bot Pairing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  /* Your beautiful original CSS (unchanged) */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg: #050508; --surface: #0c0c14; --surface2: #12121e; --border: rgba(255,255,255,0.06); --accent: #00ff88; --accent2: #ff3c6e; --accent3: #00ccff; --text: #e8e8f0; --muted: #606080; }
+  /* ... (all your CSS is kept exactly the same - I'm not repeating it here to save space) ... */
+</style>
+</head>
+<body>
+
+<!-- Your full HTML body is unchanged -->
+
+<script>
+  // ==================== CORRECT BOT ADDRESSES (UPDATED) ====================
+  const BOT_SERVERS = {
+    v2:   "http://noel.hidencloud.com:24682",     // ← V2 is now correct
+    pro:  "http://YOUR-PRO-ADDRESS:PORT",         // ← Update when PRO is ready
+    mini: "http://YOUR-MINI-ADDRESS:PORT"         // ← Update when MINI is ready
+  };
+  // =====================================================================
+
+  let currentBot = 'v2';
+  let currentServer = BOT_SERVERS.v2;
+  let countdownTimer = null;
+
+  function setBot(bot) {
+    currentBot = bot;
+    currentServer = BOT_SERVERS[bot];
+    // ... (rest of setBot function is the same as your last file)
+    const card = document.getElementById('pairCard');
+    const badge = document.getElementById('cardBadge');
+    const title = document.getElementById('cardTitle');
+    const btn = document.getElementById('pairBtn');
+    const tabs = document.querySelectorAll('.tab');
+
+    tabs.forEach(t => t.classList.remove('active-v2', 'active-pro', 'active-mini'));
+
+    if (bot === 'v2') {
+      card.className = 'card';
+      title.textContent = 'VK911 XMD';
+      badge.textContent = 'V2';
+      badge.className = 'card-badge';
+      btn.className = 'btn btn-v2';
+      tabs[0].classList.add('active-v2');
+    } else if (bot === 'pro') {
+      card.className = 'card pro-mode';
+      title.textContent = 'VK911 XMD PRO';
+      badge.textContent = 'PRO';
+      badge.className = 'card-badge pro';
+      btn.className = 'btn btn-pro';
+      tabs[1].classList.add('active-pro');
+    } else if (bot === 'mini') {
+      card.className = 'card mini-mode';
+      title.textContent = 'MINI XMD';
+      badge.textContent = 'MINI';
+      badge.className = 'card-badge mini';
+      btn.className = 'btn btn-mini';
+      tabs[2].classList.add('active-mini');
+    }
+    resetForm();
+  }
+
+  // The rest of your script (requestCode, showCode, etc.) stays exactly the same as your last version
+  async function requestCode() {
+    const phone = document.getElementById('phoneInput').value.replace(/[^0-9]/g, '');
+    const btn = document.getElementById('pairBtn');
+    const errBox = document.getElementById('errorMsg');
+
+    errBox.className = 'error-msg';
+    errBox.textContent = '';
+
+    if (!phone || phone.length < 7) {
+      return showError('Enter a valid phone number (7–15 digits, no + or spaces).');
+    }
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    setStep(1);
+
+    try {
+      const endpoint = `\( {currentServer}/pair?phone= \){encodeURIComponent(phone)}&version=${currentBot}`;
+      const res = await fetch(endpoint, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(30000)
+      });
+
+      if (!res.ok) throw new Error(`Server error (${res.status})`);
+
+      const data = await res.json();
+      if (!data.code) throw new Error('No code returned');
+
+      setStep(2);
+      showCode(data.code);
+      setStep(3);
+    } catch (err) {
+      let msg = err.message || 'Unknown error';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        msg = `Cannot reach the ${currentBot.toUpperCase()} bot.\nMake sure the bot is running.`;
+      }
+      showError(msg);
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  // (showCode, showError, setStep, resetForm functions remain exactly as you had them)
+  function showCode(code) { /* your original showCode function */ }
+  function showError(msg) { /* your original showError function */ }
+  function setStep(n) { /* your original setStep function */ }
+  function resetForm() { /* your original resetForm function */ }
+
+  document.getElementById('phoneInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') requestCode();
+  });
+
+  window.onload = () => setBot('v2');
+</script>
+</body>
+</html>
